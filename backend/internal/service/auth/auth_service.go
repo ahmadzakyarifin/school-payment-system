@@ -12,11 +12,10 @@ import (
 )
 
 var (
-	ErrInvalidCredentials = errors.New("username atau password salah")
+	ErrInvalidCredentials = errors.New("email atau password salah")
 	ErrAccountInactive    = errors.New("akun tidak aktif")
 )
 
-// AuthService mendefinisikan kontrak business logic untuk domain auth.
 type AuthService interface {
 	Login(ctx context.Context, req dto.LoginRequest) (*dto.LoginResponse, error)
 }
@@ -26,7 +25,6 @@ type authService struct {
 	jwtSecret string
 }
 
-// New membuat instance baru dari authService.
 func New(repo authrepo.AuthRepository, jwtSecret string) AuthService {
 	return &authService{
 		repo:      repo,
@@ -34,9 +32,8 @@ func New(repo authrepo.AuthRepository, jwtSecret string) AuthService {
 	}
 }
 
-// Login memvalidasi kredensial dan mengembalikan JWT token.
 func (s *authService) Login(ctx context.Context, req dto.LoginRequest) (*dto.LoginResponse, error) {
-	user, err := s.repo.FindByUsername(ctx, req.Username)
+	user, err := s.repo.FindByEmail(ctx, req.Email)
 	if err != nil {
 		return nil, fmt.Errorf("authservice.Login: %w", err)
 	}
@@ -53,13 +50,21 @@ func (s *authService) Login(ctx context.Context, req dto.LoginRequest) (*dto.Log
 		return nil, ErrInvalidCredentials
 	}
 
-	t, err := token.Generate(user.ID, user.Username, user.Role, s.jwtSecret)
+	t, err := token.Generate(user.ID, user.Email, user.Role, s.jwtSecret)
 	if err != nil {
 		return nil, fmt.Errorf("authservice.Login gagal generate token: %w", err)
 	}
 
 	return &dto.LoginResponse{
 		Token: t,
-		Role:  user.Role,
+		User: dto.UserResponse{
+			ID:        user.ID,
+			Name:      user.Name,
+			Email:     user.Email,
+			Role:      user.Role,
+			IsActive:  user.IsActive,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		},
 	}, nil
 }

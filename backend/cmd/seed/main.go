@@ -21,25 +21,25 @@ func main() {
 	}
 	defer db.Close()
 
-	username := "admin"
+	email := "admin@school.com"
 	plainPassword := "admin123"
 
 	hashed, _ := password.Hash(plainPassword)
 
 	query := `
-		INSERT INTO users (name, username, password_hash, role, is_active)
+		INSERT INTO users (name, email, password_hash, role, is_active)
 		VALUES (?, ?, ?, ?, ?)
 		ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash)
 	`
 
-	_, err = db.Exec(query, "Administrator", username, hashed, "admin", true)
+	_, err = db.Exec(query, "Administrator", email, hashed, "admin", true)
 	if err != nil {
 		log.Fatalf("Gagal membuat admin: %v", err)
 	}
 
 	fmt.Println("========================================")
 	fmt.Println("Admin Account Created Successfully!")
-	fmt.Println("Username: ", username)
+	fmt.Println("Email   : ", email)
 	fmt.Println("Password: ", plainPassword)
 	fmt.Println("========================================")
 }
