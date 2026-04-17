@@ -15,54 +15,67 @@ type FieldError struct {
 	Message string `json:"message"`
 }
 
-type Response struct {
-	Code    int          `json:"code"`
-	Success bool         `json:"success"`
-	Message string       `json:"message"`
-	Data    interface{}  `json:"data,omitempty"`
-	Errors  []FieldError `json:"errors,omitempty"`
+type Pagination struct {
+	TotalRows   int64 `json:"total_rows"`
+	TotalPages  int   `json:"total_pages"`
+	CurrentPage int   `json:"current_page"`
+	Limit       int   `json:"limit"`
 }
 
-func send(c *gin.Context, code int, success bool, message string, data interface{}, errs []FieldError) {
+type Response struct {
+	Code       int          `json:"code"`
+	Success    bool         `json:"success"`
+	Message    string       `json:"message"`
+	Data       interface{}  `json:"data,omitempty"`
+	Pagination *Pagination  `json:"pagination,omitempty"`
+	Errors     []FieldError `json:"errors,omitempty"`
+}
+
+func send(c *gin.Context, code int, success bool, message string, data interface{}, errs []FieldError, pg *Pagination) {
 	c.JSON(code, Response{
-		Code:    code,
-		Success: success,
-		Message: message,
-		Data:    data,
-		Errors:  errs,
+		Code:       code,
+		Success:    success,
+		Message:    message,
+		Data:       data,
+		Pagination: pg,
+		Errors:     errs,
 	})
 }
 
 func OK(c *gin.Context, message string, data interface{}) {
-	send(c, http.StatusOK, true, message, data, nil)
+	send(c, http.StatusOK, true, message, data, nil, nil)
+}
+
+func OKWithPagination(c *gin.Context, message string, data interface{}, pg Pagination) {
+	send(c, http.StatusOK, true, message, data, nil, &pg)
 }
 
 func Created(c *gin.Context, message string, data interface{}) {
-	send(c, http.StatusCreated, true, message, data, nil)
+	send(c, http.StatusCreated, true, message, data, nil, nil)
 }
 
 func BadRequest(c *gin.Context, message string) {
-	send(c, http.StatusBadRequest, false, message, nil, nil)
+	send(c, http.StatusBadRequest, false, message, nil, nil, nil)
 }
 
 func Unauthorized(c *gin.Context, message string) {
-	send(c, http.StatusUnauthorized, false, message, nil, nil)
+	send(c, http.StatusUnauthorized, false, message, nil, nil, nil)
 }
 
 func InternalServerError(c *gin.Context, message string) {
-	send(c, http.StatusInternalServerError, false, message, nil, nil)
+	send(c, http.StatusInternalServerError, false, message, nil, nil, nil)
 }
 
 func Forbidden(c *gin.Context, message string) {
-	send(c, http.StatusForbidden, false, message, nil, nil)
+	send(c, http.StatusForbidden, false, message, nil, nil, nil)
 }
 
 func NotFound(c *gin.Context, message string) {
-	send(c, http.StatusNotFound, false, message, nil, nil)
+	send(c, http.StatusNotFound, false, message, nil, nil, nil)
 }
 
 func Conflict(c *gin.Context, message string) {
-	send(c, http.StatusConflict, false, message, nil, nil)
+	send(c, http.StatusConflict, false, message, nil, nil, nil)
 }
 
 func ValidationError(c *gin.Context, err error) {
@@ -78,7 +91,7 @@ func ValidationError(c *gin.Context, err error) {
 		}
 	}
 
-	send(c, http.StatusBadRequest, false, "Validasi gagal", nil, details)
+	send(c, http.StatusBadRequest, false, "Validasi gagal", nil, details, nil)
 }
 
 func getErrorMsg(fe validator.FieldError) string {
