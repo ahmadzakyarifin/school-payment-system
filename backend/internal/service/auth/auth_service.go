@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ahmadzakyarifin/school-payment-system/internal/dto"
+	authdto "github.com/ahmadzakyarifin/school-payment-system/internal/dto/auth"
+	userdto "github.com/ahmadzakyarifin/school-payment-system/internal/dto/user"
 	authrepo "github.com/ahmadzakyarifin/school-payment-system/internal/repository/auth"
 	"github.com/ahmadzakyarifin/school-payment-system/pkg/utils/password"
 	"github.com/ahmadzakyarifin/school-payment-system/pkg/utils/token"
@@ -17,7 +18,7 @@ var (
 )
 
 type AuthService interface {
-	Login(ctx context.Context, req dto.LoginRequest) (*dto.LoginResponse, error)
+	Login(ctx context.Context, req authdto.LoginRequest) (*authdto.LoginResponse, error)
 }
 
 type authService struct {
@@ -32,7 +33,7 @@ func New(repo authrepo.AuthRepository, jwtSecret string) AuthService {
 	}
 }
 
-func (s *authService) Login(ctx context.Context, req dto.LoginRequest) (*dto.LoginResponse, error) {
+func (s *authService) Login(ctx context.Context, req authdto.LoginRequest) (*authdto.LoginResponse, error) {
 	user, err := s.repo.FindByEmail(ctx, req.Email)
 	if err != nil {
 		return nil, fmt.Errorf("authservice.Login: %w", err)
@@ -55,9 +56,9 @@ func (s *authService) Login(ctx context.Context, req dto.LoginRequest) (*dto.Log
 		return nil, fmt.Errorf("authservice.Login gagal generate token: %w", err)
 	}
 
-	return &dto.LoginResponse{
+	return &authdto.LoginResponse{
 		Token: t,
-		User: dto.UserResponse{
+		User: userdto.UserResponse{
 			ID:        user.ID,
 			Name:      user.Name,
 			Email:     user.Email,

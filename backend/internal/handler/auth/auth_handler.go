@@ -3,7 +3,7 @@ package authhandler
 import (
 	"errors"
 
-	"github.com/ahmadzakyarifin/school-payment-system/internal/dto"
+	authdto "github.com/ahmadzakyarifin/school-payment-system/internal/dto/auth"
 	authservice "github.com/ahmadzakyarifin/school-payment-system/internal/service/auth"
 	"github.com/ahmadzakyarifin/school-payment-system/pkg/response"
 	"github.com/gin-gonic/gin"
@@ -18,7 +18,7 @@ func New(service authservice.AuthService) *AuthHandler {
 }
 
 func (h *AuthHandler) Login(c *gin.Context) {
-	var req dto.LoginRequest
+	var req authdto.LoginRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.ValidationError(c, err)

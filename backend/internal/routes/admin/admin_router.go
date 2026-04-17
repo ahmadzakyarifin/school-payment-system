@@ -2,17 +2,18 @@ package adminrouter
 
 import (
 	"github.com/ahmadzakyarifin/school-payment-system/internal/app"
-	adminhandler "github.com/ahmadzakyarifin/school-payment-system/internal/handler/admin"
+	adminuserhandler "github.com/ahmadzakyarifin/school-payment-system/internal/handler/admin/user"
 	"github.com/ahmadzakyarifin/school-payment-system/internal/middleware"
-	adminrepo "github.com/ahmadzakyarifin/school-payment-system/internal/repository/admin"
-	adminservice "github.com/ahmadzakyarifin/school-payment-system/internal/service/admin"
+	adminuserrepo "github.com/ahmadzakyarifin/school-payment-system/internal/repository/admin/user"
+	adminuserservice "github.com/ahmadzakyarifin/school-payment-system/internal/service/admin/user"
 	"github.com/gin-gonic/gin"
 )
 
 func Setup(a *app.App, rg *gin.RouterGroup) {
-	repo := adminrepo.New(a.DB)
-	service := adminservice.New(repo)
-	handler := adminhandler.New(service)
+	// Initialize User Stack (Modular)
+	userRepo := adminuserrepo.New(a.DB)
+	userService := adminuserservice.New(userRepo)
+	userHandler := adminuserhandler.New(userService)
 
 	admin := rg.Group("/admin")
 	admin.Use(middleware.RequireRole("admin"))
@@ -20,20 +21,13 @@ func Setup(a *app.App, rg *gin.RouterGroup) {
 		// User Management CRUD
 		users := admin.Group("/users")
 		{
-			// List (Search, Filter, Pagination)
-			users.GET("", handler.ListUsers)
-			// Daftar role dinamis
-			users.GET("/roles", handler.GetRoles)
-			// Detail user
-			users.GET("/:id", handler.GetUserByID)
-			// Tambah baru
-			users.POST("", handler.CreateUser)
-			// Update (Partial)
-			users.PATCH("/:id", handler.UpdateUser)
-			// Toggle Aktif/Nonaktif
-			users.PATCH("/:id/status", handler.ToggleStatus)
-			// Hapus
-			users.DELETE("/:id", handler.DeleteUser)
+			users.GET("", userHandler.ListUsers)
+			users.GET("/roles", userHandler.GetRoles)
+			users.GET("/:id", userHandler.GetUserByID)
+			users.POST("", userHandler.CreateUser)
+			users.PATCH("/:id", userHandler.UpdateUser)
+			users.PATCH("/:id/status", userHandler.ToggleStatus)
+			users.DELETE("/:id", userHandler.DeleteUser)
 		}
 	}
 }

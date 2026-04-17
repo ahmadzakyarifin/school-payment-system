@@ -1,4 +1,4 @@
-package dto
+package userdto
 
 import "time"
 
@@ -11,6 +11,14 @@ type UserResponse struct {
 	IsActive  bool      `json:"is_active"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type UserListRequest struct {
+	Search   string `form:"search"`
+	Role     string `form:"role"`
+	IsActive *bool  `form:"is_active"`
+	Page     int    `form:"page"`
+	Limit    int    `form:"limit"`
 }
 
 type CreateUserRequest struct {

@@ -1,24 +1,24 @@
-package adminhandler
+package adminuserhandler
 
 import (
 	"strconv"
 
-	"github.com/ahmadzakyarifin/school-payment-system/internal/dto"
-	adminservice "github.com/ahmadzakyarifin/school-payment-system/internal/service/admin"
+	userdto "github.com/ahmadzakyarifin/school-payment-system/internal/dto/user"
+	adminuserservice "github.com/ahmadzakyarifin/school-payment-system/internal/service/admin/user"
 	"github.com/ahmadzakyarifin/school-payment-system/pkg/response"
 	"github.com/gin-gonic/gin"
 )
 
-type AdminHandler struct {
-	service adminservice.AdminService
+type AdminUserHandler struct {
+	service adminuserservice.AdminUserService
 }
 
-func New(service adminservice.AdminService) *AdminHandler {
-	return &AdminHandler{service: service}
+func New(service adminuserservice.AdminUserService) *AdminUserHandler {
+	return &AdminUserHandler{service: service}
 }
 
-func (h *AdminHandler) ListUsers(c *gin.Context) {
-	var req dto.UserListRequest
+func (h *AdminUserHandler) ListUsers(c *gin.Context) {
+	var req userdto.UserListRequest
 	if err := c.ShouldBindQuery(&req); err != nil {
 		response.ValidationError(c, err)
 		return
@@ -32,7 +32,7 @@ func (h *AdminHandler) ListUsers(c *gin.Context) {
 	response.OKWithPagination(c, "Data user berhasil diambil", users, pagination)
 }
 
-func (h *AdminHandler) GetUserByID(c *gin.Context) {
+func (h *AdminUserHandler) GetUserByID(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, "ID tidak valid")
@@ -47,8 +47,8 @@ func (h *AdminHandler) GetUserByID(c *gin.Context) {
 	response.OK(c, "Data user berhasil diambil", user)
 }
 
-func (h *AdminHandler) CreateUser(c *gin.Context) {
-	var req dto.CreateUserRequest
+func (h *AdminUserHandler) CreateUser(c *gin.Context) {
+	var req userdto.CreateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.ValidationError(c, err)
 		return
@@ -62,14 +62,14 @@ func (h *AdminHandler) CreateUser(c *gin.Context) {
 	response.Created(c, "User berhasil dibuat", user)
 }
 
-func (h *AdminHandler) UpdateUser(c *gin.Context) {
+func (h *AdminUserHandler) UpdateUser(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, "ID tidak valid")
 		return
 	}
 
-	var req dto.UpdateUserRequest
+	var req userdto.UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.ValidationError(c, err)
 		return
@@ -83,7 +83,7 @@ func (h *AdminHandler) UpdateUser(c *gin.Context) {
 	response.OK(c, "Data user berhasil diupdate", user)
 }
 
-func (h *AdminHandler) ToggleStatus(c *gin.Context) {
+func (h *AdminUserHandler) ToggleStatus(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, "ID tidak valid")
@@ -98,7 +98,7 @@ func (h *AdminHandler) ToggleStatus(c *gin.Context) {
 	response.OK(c, "Status user berhasil diubah", user)
 }
 
-func (h *AdminHandler) DeleteUser(c *gin.Context) {
+func (h *AdminUserHandler) DeleteUser(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
 		response.BadRequest(c, "ID tidak valid")
@@ -112,7 +112,7 @@ func (h *AdminHandler) DeleteUser(c *gin.Context) {
 	response.OK(c, "User berhasil dihapus", gin.H{"id": id})
 }
 
-func (h *AdminHandler) GetRoles(c *gin.Context) {
+func (h *AdminUserHandler) GetRoles(c *gin.Context) {
 	roles, err := h.service.GetRoles(c.Request.Context())
 	if err != nil {
 		response.InternalServerError(c, "Gagal mengambil daftar role")

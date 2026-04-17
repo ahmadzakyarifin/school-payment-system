@@ -1,4 +1,4 @@
-package adminrepo
+package adminuserrepo
 
 import (
 	"context"
@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/ahmadzakyarifin/school-payment-system/internal/dto"
+	userdto "github.com/ahmadzakyarifin/school-payment-system/internal/dto/user"
 	"github.com/ahmadzakyarifin/school-payment-system/internal/entity"
 	"github.com/jmoiron/sqlx"
 )
 
-type AdminRepository interface {
-	FindAll(ctx context.Context, req dto.UserListRequest) ([]entity.User, int64, error)
+type AdminUserRepository interface {
+	FindAll(ctx context.Context, req userdto.UserListRequest) ([]entity.User, int64, error)
 	FindByID(ctx context.Context, id int64) (*entity.User, error)
 	GetRoles(ctx context.Context) ([]string, error)
 	Create(ctx context.Context, user *entity.User) (int64, error)
@@ -22,15 +22,15 @@ type AdminRepository interface {
 	CheckDuplicate(ctx context.Context, email string, excludeID int64) (bool, error)
 }
 
-type adminRepository struct {
+type adminUserRepository struct {
 	db *sqlx.DB
 }
 
-func New(db *sqlx.DB) AdminRepository {
-	return &adminRepository{db: db}
+func New(db *sqlx.DB) AdminUserRepository {
+	return &adminUserRepository{db: db}
 }
 
-func (r *adminRepository) FindAll(ctx context.Context, req dto.UserListRequest) ([]entity.User, int64, error) {
+func (r *adminUserRepository) FindAll(ctx context.Context, req userdto.UserListRequest) ([]entity.User, int64, error) {
 	var users []entity.User
 	var total int64
 
@@ -38,7 +38,6 @@ func (r *adminRepository) FindAll(ctx context.Context, req dto.UserListRequest) 
 	args := []interface{}{}
 
 	if req.Search != "" {
-		// Sekarang fokus pencarian hanya di name dan email (karena username sudah dihapus)
 		where += " AND MATCH(name, email) AGAINST(? IN BOOLEAN MODE)"
 		args = append(args, req.Search+"*")
 	}
@@ -66,14 +65,17 @@ func (r *adminRepository) FindAll(ctx context.Context, req dto.UserListRequest) 
 	return users, total, err
 }
 
-func (r *adminRepository) CheckDuplicate(ctx context.Context, email string, excludeID int64) (bool, error) {
-	var exists bool
-	query := `SELECT EXISTS(SELECT 1 FROM users WHERE email = ? AND id != ? AND deleted_at IS NULL)`
-	err := r.db.GetContext(ctx, &exists, query, email, excludeID)
-	return exists, err
+func (r *adminUserRepository) FindByID(ctx context.Context, id int64) (*entity.User, error) {
+	var user entity.User
+	query := "SELECT * FROM users WHERE id = ? AND deleted_at IS NULL"
+	err := r.db.GetContext(ctx, &user, query, id)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	return &user, err
 }
 
-func (r *adminRepository) GetRoles(ctx context.Context) ([]string, error) {
+func (r *adminUserRepository) GetRoles(ctx context.Context) ([]string, error) {
 	var columnType string
 	query := `SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='users' AND COLUMN_NAME='role' AND TABLE_SCHEMA=(SELECT DATABASE())`
 	err := r.db.GetContext(ctx, &columnType, query)
@@ -89,17 +91,7 @@ func (r *adminRepository) GetRoles(ctx context.Context) ([]string, error) {
 	return roles, nil
 }
 
-func (r *adminRepository) FindByID(ctx context.Context, id int64) (*entity.User, error) {
-	var user entity.User
-	query := "SELECT * FROM users WHERE id = ? AND deleted_at IS NULL"
-	err := r.db.GetContext(ctx, &user, query, id)
-	if err == sql.ErrNoRows {
-		return nil, nil
-	}
-	return &user, err
-}
-
-func (r *adminRepository) Create(ctx context.Context, user *entity.User) (int64, error) {
+func (r *adminUserRepository) Create(ctx context.Context, user *entity.User) (int64, error) {
 	query := `INSERT INTO users (name, email, password_hash, phone, role, is_active) VALUES (:name, :email, :password_hash, :phone, :role, :is_active)`
 	res, err := r.db.NamedExecContext(ctx, query, user)
 	if err != nil {
@@ -108,20 +100,27 @@ func (r *adminRepository) Create(ctx context.Context, user *entity.User) (int64,
 	return res.LastInsertId()
 }
 
-func (r *adminRepository) Update(ctx context.Context, user *entity.User) error {
+func (r *adminUserRepository) Update(ctx context.Context, user *entity.User) error {
 	query := `UPDATE users SET name=:name, email=:email, phone=:phone, role=:role, is_active=:is_active WHERE id=:id`
 	_, err := r.db.NamedExecContext(ctx, query, user)
 	return err
 }
 
-func (r *adminRepository) UpdateStatus(ctx context.Context, id int64, isActive bool) error {
+func (r *adminUserRepository) UpdateStatus(ctx context.Context, id int64, isActive bool) error {
 	query := "UPDATE users SET is_active = ? WHERE id = ?"
 	_, err := r.db.ExecContext(ctx, query, isActive, id)
 	return err
 }
 
-func (r *adminRepository) Delete(ctx context.Context, id int64) error {
+func (r *adminUserRepository) Delete(ctx context.Context, id int64) error {
 	query := "UPDATE users SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?"
 	_, err := r.db.ExecContext(ctx, query, id)
 	return err
+}
+
+func (r *adminUserRepository) CheckDuplicate(ctx context.Context, email string, excludeID int64) (bool, error) {
+	var exists bool
+	query := `SELECT EXISTS(SELECT 1 FROM users WHERE email = ? AND id != ? AND deleted_at IS NULL)`
+	err := r.db.GetContext(ctx, &exists, query, email, excludeID)
+	return exists, err
 }
