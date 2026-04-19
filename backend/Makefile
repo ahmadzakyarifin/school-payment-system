@@ -6,8 +6,9 @@ endif
 
 # Database URL
 DB_URL := mysql://$(DB_USER):$(DB_PASSWORD)@tcp($(DB_HOST):$(DB_PORT))/$(DB_NAME)
-# Migration tool
-MIGRATE := $(HOME)/go/bin/migrate -path migrations -database "$(DB_URL)"
+# Migration tool (flexible path for local vs docker)
+MIGRATE_BIN := $(shell which migrate || echo $(HOME)/go/bin/migrate)
+MIGRATE := $(MIGRATE_BIN) -path migrations -database "$(DB_URL)"
 
 .DEFAULT_GOAL := help
 

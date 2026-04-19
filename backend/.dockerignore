@@ -1,0 +1,7 @@
+tmp/
+bin/
+vendor/
+.env
+Dockerfile
+.git
+.gitignore
